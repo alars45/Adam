@@ -30,7 +30,7 @@ Arcade maze action on a frozen mountain pond, in [`pond-hockey/index.html`](pond
 - **P / Esc** to pause (intermission), **M** to mute
 
 ## The pond
-- **You:** a Summit youth player in a gold jersey, navy helmet and skates, stick in hand
+- **You:** a Summit youth player in a blue jersey, navy helmet and skates, stick in hand
 - **The big kids**, each chasing you in their own way:
   - **Bruiser**, the muscular enforcer (red), comes straight at you
   - **Stretch**, the tall beanpole (pink), cuts you off ahead
@@ -41,4 +41,4 @@ Arcade maze action on a frozen mountain pond, in [`pond-hockey/index.html`](pond
 - Clear the pond to score a **GOAL!** and move on to the next period, then overtime
 - Blue scratched-ice rink with snowbank walls and pine trees, and a title screen with snowcapped mountains
 - Hockey sounds: skate scrapes, slapshots, body checks, the referee's whistle and the goal horn
-- 3 lives with an extra one at 10,000 points, and a high score saved in the browser
+- 3 lives with an extra one at 7,500 points, and a high score saved in the browser

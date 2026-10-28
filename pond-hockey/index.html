@@ -19,15 +19,15 @@
   canvas { display: block; }
   #pad {
     display: none; margin-top: 8px;
-    grid-template-columns: repeat(3, 60px); grid-template-rows: repeat(3, 48px);
+    grid-template-columns: repeat(3, 72px); grid-template-rows: repeat(3, 58px);
     grid-template-areas: ". u ." "l . r" ". d .";
-    gap: 4px;
+    gap: 6px; touch-action: none;
   }
   #pad button {
     font: inherit; font-size: 18px; color: #ffc107; background: #0b2440;
     border: 2px solid #4aa3e8; border-radius: 10px; touch-action: none;
   }
-  #pad button:active { background: #4aa3e8; }
+  #pad button.on { background: #4aa3e8; color: #fff; }
   #pad .u { grid-area: u; } #pad .l { grid-area: l; } #pad .r { grid-area: r; } #pad .d { grid-area: d; }
   @media (pointer: coarse) { #pad { display: grid; } }
 </style>
@@ -109,9 +109,23 @@
   ];
   const fruitIndex = L => L <= 2 ? L - 1 : L >= 13 ? 7 : Math.floor((L + 1) / 2);
 
-  // Difficulty table modelled on the arcade's per-level settings.
+  // Tuned 25% easier than the arcade: opponents skate 10% slower, puck power
+  // lasts 25% longer, opponents stay in the penalty box 25% longer, and the
+  // extra life comes 25% sooner.
+  const EASY = { speed: 0.9, fright: 1.25, release: 1.25, extraLife: 7500 };
+
+  // Difficulty table modelled on the arcade's per-level settings, scaled by EASY.
   function levelSpec(L) {
     const tier = L === 1 ? 0 : L <= 4 ? 1 : 2;
+    const spec = arcadeSpec(L, tier);
+    for (const k of ['ghost', 'ghostFright', 'tunnel', 'elroy1', 'elroy2']) spec[k] *= EASY.speed;
+    spec.fright *= EASY.fright;
+    spec.release = spec.release.map(n => Math.round(n * EASY.release));
+    spec.idle *= EASY.release;
+    return spec;
+  }
+
+  function arcadeSpec(L, tier) {
     return {
       pac: L >= 21 ? 0.9 : [0.8, 0.9, 1][tier],
       pacFright: [0.9, 0.95, 1][tier],
@@ -599,7 +613,7 @@
 
   function addScore(n) {
     score += n;
-    if (!extraGiven && score >= 10000) { extraGiven = true; lives++; sfx.extra(); }
+    if (!extraGiven && score >= EASY.extraLife) { extraGiven = true; lives++; sfx.extra(); }
     if (score > hi) hi = score;
   }
 
@@ -634,6 +648,15 @@
   function movePac(dt) {
     if (pac.stall > 0) { pac.stall -= dt; return; }
     if (want && want === opposite(pac.dir)) { pac.dir = want; pac.moving = true; }
+    // Forgive a slightly late turn: if the skater has just passed the centre of
+    // a tile where the wanted turn is open, snap back to the centre and take it.
+    if (want && pac.moving && want !== pac.dir && want !== opposite(pac.dir)) {
+      const c = Math.floor(pac.x), r = Math.floor(pac.y);
+      const past = (pac.x - (c + 0.5)) * pac.dir.x + (pac.y - (r + 0.5)) * pac.dir.y;
+      if (past > 0 && past < 0.4 && pacOpen(c + want.x, r + want.y)) {
+        pac.x = c + 0.5; pac.y = r + 0.5; pac.dir = want;
+      }
+    }
     if (!pac.moving) {
       const c = Math.floor(pac.x), r = Math.floor(pac.y);
       if (want && pacOpen(c + want.x, r + want.y)) { pac.dir = want; pac.moving = true; }
@@ -760,7 +783,7 @@
   }
 
   function releaseGhosts(dt) {
-    const limits = deathRelease ? [0, 7, 17, 32] : spec.release;
+    const limits = deathRelease ? [0, 7, 17, 32].map(n => Math.round(n * EASY.release)) : spec.release;
     const next = ghosts.find(g => g.state === 'house');
     if (!next) return;
     idleTime += dt;
@@ -954,7 +977,8 @@
     ctx.stroke();
   }
 
-  // The hero: a Summit youth player in a gold jersey and navy helmet.
+  // The hero: a Summit youth player in a blue jersey and navy helmet.
+  const KID_JERSEY = '#1d3fc4';
   function drawKid(x, y, faceRight, anim, death = null, s = 1) {
     ctx.save();
     ctx.translate(x, y);
@@ -967,16 +991,19 @@
     }
     if (!faceRight) ctx.scale(-1, 1);
     const stride = death === null ? Math.sin(anim * Math.PI * 1.4) * 3.5 : 2;
-    drawLegs(stride, 3.6, '#ffc107');
+    drawLegs(stride, 3.6, KID_JERSEY);
     ctx.fillStyle = '#111';
     rrect(ctx, -5, 1.5, 10, 4.5, 2);
     ctx.fill();
-    ctx.fillStyle = '#ffc107';
+    ctx.fillStyle = KID_JERSEY;
     rrect(ctx, -5.5, -5.5, 11, 8.5, 3);
     ctx.fill();
-    ctx.fillStyle = '#0d2a6b';
+    ctx.strokeStyle = '#ffffff';  // white piping keeps the blue jersey readable on the ice
+    ctx.lineWidth = 0.8;
+    ctx.stroke();
+    ctx.fillStyle = '#ffffff';
     ctx.fillRect(-5.5, 0, 11, 1.6);
-    ctx.strokeStyle = '#ffc107';
+    ctx.strokeStyle = KID_JERSEY;
     ctx.lineWidth = 3;
     ctx.lineCap = 'round';
     ctx.beginPath();
@@ -1374,34 +1401,55 @@
     }
   });
 
-  let touchStart = null;
+  // Swipes steer as soon as the finger has moved a little, and one long
+  // gesture can make several turns.
+  let touchStart = null, swiped = false;
   canvas.addEventListener('touchstart', e => {
     const t = e.changedTouches[0];
     touchStart = { x: t.clientX, y: t.clientY };
+    swiped = false;
     e.preventDefault();
   }, { passive: false });
-  canvas.addEventListener('touchend', e => {
+  canvas.addEventListener('touchmove', e => {
     if (!touchStart) return;
     const t = e.changedTouches[0];
     const dx = t.clientX - touchStart.x, dy = t.clientY - touchStart.y;
+    e.preventDefault();
+    if (Math.max(Math.abs(dx), Math.abs(dy)) < 14) return;
+    want = Math.abs(dx) > Math.abs(dy) ? DIRS[dx > 0 ? 3 : 1] : DIRS[dy > 0 ? 2 : 0];
+    touchStart = { x: t.clientX, y: t.clientY };
+    swiped = true;
+  }, { passive: false });
+  canvas.addEventListener('touchend', e => {
+    if (!touchStart) return;
     touchStart = null;
     e.preventDefault();
-    if (Math.max(Math.abs(dx), Math.abs(dy)) < 20) {
-      if (paused) paused = false; else startGame();
-      return;
-    }
-    want = Math.abs(dx) > Math.abs(dy) ? DIRS[dx > 0 ? 3 : 1] : DIRS[dy > 0 ? 2 : 0];
+    if (!swiped) { if (paused) paused = false; else startGame(); }
   }, { passive: false });
   canvas.addEventListener('click', () => { if (paused) paused = false; else startGame(); });
 
-  pad.querySelectorAll('button').forEach(b => {
-    b.addEventListener('pointerdown', e => {
-      e.preventDefault();
-      initAudio();
-      want = DIRS[+b.dataset.d];
-      if (state === 'title') startGame();
-    });
+  // The D-pad reads the finger's position relative to its centre, so sliding
+  // from one arrow to another turns without lifting the finger.
+  const padButtons = [...pad.querySelectorAll('button')];
+  function padSteer(e) {
+    const r = pad.getBoundingClientRect();
+    const dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2);
+    if (Math.hypot(dx, dy) < 14) return;
+    const d = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 3 : 1) : (dy > 0 ? 2 : 0);
+    want = DIRS[d];
+    padButtons.forEach(b => b.classList.toggle('on', +b.dataset.d === d));
+  }
+  const padRelease = () => padButtons.forEach(b => b.classList.remove('on'));
+  pad.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    initAudio();
+    try { pad.setPointerCapture(e.pointerId); } catch {}
+    padSteer(e);
+    if (state === 'title') startGame();
   });
+  pad.addEventListener('pointermove', e => { if (pad.hasPointerCapture(e.pointerId)) padSteer(e); });
+  pad.addEventListener('pointerup', padRelease);
+  pad.addEventListener('pointercancel', padRelease);
 
   document.addEventListener('visibilitychange', () => {
     if (document.hidden && inGame()) paused = true;
