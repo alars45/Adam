@@ -18,22 +18,27 @@ Expect sass: *FABULOUS!*, *SLAY!*, *BYE, KITTY!*, *NOT THE BANDANA!*
 
 ---
 
-# 🟡 Pac-Man Clone
+# 🏒 Summit Youth Hockey 5 Hole Pond Hockey Attack
 
-A faithful take on the classic arcade game lives in [`pacman/index.html`](pacman/index.html). Open it in any modern browser; it's a single file with no build step.
+Arcade maze action on a frozen mountain pond, in [`pond-hockey/index.html`](pond-hockey/index.html). Open it in any modern browser; it's a single file with no build step.
+
+**The story:** the big kids took over the pond! Skate the maze, clear the snow, grab a puck and go five-hole on them.
 
 ## Controls
-- **Arrow keys / WASD** (or swipe or the on-screen D-pad on touch screens) to move
-- **Enter / Space / tap** to start
-- **P / Esc** to pause, **M** to mute
+- **Arrow keys / WASD** (or swipe or the on-screen D-pad on touch screens) to skate
+- **Enter / Space / tap** to drop the puck
+- **P / Esc** to pause (intermission), **M** to mute
 
-## Features
-- The 28×31 arcade maze with 240 dots, 4 power pellets and the wrap-around side tunnel
-- Four ghosts with their arcade personalities: Blinky chases you directly, Pinky ambushes ahead of you, Inky flanks using Blinky's position, and Clyde gets shy up close
-- Scatter/chase waves, frightened mode with flashing, and eaten ghosts' eyes returning to the house
-- Ghost-house release by dot counters and an idle timer, and "Cruise Elroy" (Blinky speeds up as the dots run out)
-- Ghost combos worth 200 / 400 / 800 / 1600; bonus fruit from cherry (100) up to key (5000)
-- Arcade speed tables per level, including tunnel slowdown and the short pause for each dot eaten
-- 3 lives with an extra life at 10,000 points, and a high score saved in the browser
-- Synthesized sound: waka, siren, frightened and eyes sounds, a death jingle and an original start tune
-- Ready / death / level-flash / game-over sequences, plus the character roll call on the title screen
+## The pond
+- **You:** a Summit youth player in a gold jersey, navy helmet and skates, stick in hand
+- **The big kids**, each chasing you in their own way:
+  - **Bruiser**, the muscular enforcer (red), comes straight at you
+  - **Stretch**, the tall beanpole (pink), cuts you off ahead
+  - **Average Joe**, the average-build grinder (green), flanks you
+  - **Meatball**, the big guy (orange), charges in, then backs off when he gets close
+- **Snowflakes** are 10 points each. **Hockey pucks** are 50 points: grab one and the big kids get weak ankles, so you can go 5-hole on them (200, 400, 800 then 1600 points) and send them to the **penalty box**
+- **Bonus items** appear twice per period: hot cocoa, orange slices, water bottle, stick tape, helmet, gloves, stick and the trophy (100 to 5000 points)
+- Clear the pond to score a **GOAL!** and move on to the next period, then overtime
+- Blue scratched-ice rink with snowbank walls and pine trees, and a title screen with snowcapped mountains
+- Hockey sounds: skate scrapes, slapshots, body checks, the referee's whistle and the goal horn
+- 3 lives with an extra one at 10,000 points, and a high score saved in the browser
